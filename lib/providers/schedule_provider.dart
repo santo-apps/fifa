@@ -32,14 +32,21 @@ class ScheduleProvider extends ChangeNotifier {
   List<MatchModel> get liveMatches =>
       _matches.where((m) => m.status == 'live').toList();
 
-  // Today's matches relative to a date. We'll default to the current system date.
-  // Since the user is testing on June 10/11, 2026, let's extract matches on the same day in local/UTC.
   List<MatchModel> getTodayMatches(DateTime referenceDate) {
     return _matches.where((m) {
       final matchLocal = m.dateTime.toLocal();
-      return matchLocal.year == referenceDate.year &&
-          matchLocal.month == referenceDate.month &&
-          matchLocal.day == referenceDate.day;
+      final refLocal = referenceDate.toLocal();
+      final sameLocal = matchLocal.year == refLocal.year &&
+          matchLocal.month == refLocal.month &&
+          matchLocal.day == refLocal.day;
+
+      final matchUtc = m.dateTime.toUtc();
+      final refUtc = referenceDate.toUtc();
+      final sameUtc = matchUtc.year == refUtc.year &&
+          matchUtc.month == refUtc.month &&
+          matchUtc.day == refUtc.day;
+
+      return sameLocal || sameUtc;
     }).toList();
   }
 

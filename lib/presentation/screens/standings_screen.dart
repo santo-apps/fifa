@@ -66,8 +66,8 @@ class StandingsScreen extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: DataTable(
-              columnSpacing: 12,
-              horizontalMargin: 16,
+              columnSpacing: 6,
+              horizontalMargin: 8,
               headingRowColor: WidgetStateProperty.all(
                 isDark
                     ? Colors.white.withOpacity(0.04)
@@ -81,7 +81,7 @@ class StandingsScreen extends StatelessWidget {
                       'Pos',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ),
@@ -89,7 +89,63 @@ class StandingsScreen extends StatelessWidget {
                 DataColumn(
                   label: Text(
                     'Team',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
+                ),
+                DataColumn(
+                  numeric: true,
+                  label: SizedBox(
+                    width: 14,
+                    child: Text(
+                      'P',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  numeric: true,
+                  label: SizedBox(
+                    width: 14,
+                    child: Text(
+                      'W',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  numeric: true,
+                  label: SizedBox(
+                    width: 14,
+                    child: Text(
+                      'D',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  numeric: true,
+                  label: SizedBox(
+                    width: 14,
+                    child: Text(
+                      'L',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 DataColumn(
@@ -97,24 +153,10 @@ class StandingsScreen extends StatelessWidget {
                   label: SizedBox(
                     width: 20,
                     child: Text(
-                      'P',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-                DataColumn(
-                  numeric: true,
-                  label: SizedBox(
-                    width: 25,
-                    child: Text(
                       'GD',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -123,12 +165,12 @@ class StandingsScreen extends StatelessWidget {
                 DataColumn(
                   numeric: true,
                   label: SizedBox(
-                    width: 30,
+                    width: 24,
                     child: Text(
                       'PTS',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 11,
                         color: Theme.of(context).colorScheme.secondary,
                       ),
                       textAlign: TextAlign.center,
@@ -139,8 +181,10 @@ class StandingsScreen extends StatelessWidget {
               rows: List.generate(standings.length, (idx) {
                 final standing = standings[idx];
                 final pos = idx + 1;
-                // Highlight top 2 as qualifying spots
-                final isQualifyingSpot = pos <= 2;
+                // Highlight top 2 as qualifying spots ONLY when group finished
+                final totalPlayed = standings.fold<int>(0, (sum, t) => sum + t.played);
+                final isGroupFinished = totalPlayed >= 12;
+                final isQualifyingSpot = isGroupFinished && (pos <= 2);
 
                 return DataRow(
                   cells: [
@@ -166,7 +210,7 @@ class StandingsScreen extends StatelessWidget {
                               fontWeight: isQualifyingSpot
                                   ? FontWeight.bold
                                   : FontWeight.normal,
-                              fontSize: 13,
+                              fontSize: 12,
                               color: isQualifyingSpot
                                   ? (isDark
                                         ? Colors.white
@@ -183,9 +227,9 @@ class StandingsScreen extends StatelessWidget {
                         children: [
                           Text(
                             standing.flag,
-                            style: const TextStyle(fontSize: 18),
+                            style: const TextStyle(fontSize: 16),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               standing.teamName,
@@ -194,7 +238,7 @@ class StandingsScreen extends StatelessWidget {
                                 fontWeight: isQualifyingSpot
                                     ? FontWeight.bold
                                     : FontWeight.normal,
-                                fontSize: 13,
+                                fontSize: 12,
                               ),
                             ),
                           ),
@@ -204,10 +248,43 @@ class StandingsScreen extends StatelessWidget {
                     // Played
                     DataCell(
                       SizedBox(
-                        width: 20,
+                        width: 14,
                         child: Text(
                           '${standing.played}',
-                          style: const TextStyle(fontSize: 13),
+                          style: const TextStyle(fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    // Won
+                    DataCell(
+                      SizedBox(
+                        width: 14,
+                        child: Text(
+                          '${standing.won}',
+                          style: const TextStyle(fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    // Drawn
+                    DataCell(
+                      SizedBox(
+                        width: 14,
+                        child: Text(
+                          '${standing.drawn}',
+                          style: const TextStyle(fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    // Lost
+                    DataCell(
+                      SizedBox(
+                        width: 14,
+                        child: Text(
+                          '${standing.lost}',
+                          style: const TextStyle(fontSize: 12),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -215,13 +292,13 @@ class StandingsScreen extends StatelessWidget {
                     // GD
                     DataCell(
                       SizedBox(
-                        width: 25,
+                        width: 20,
                         child: Text(
                           standing.goalDifference > 0
                               ? '+${standing.goalDifference}'
                               : '${standing.goalDifference}',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: standing.goalDifference > 0
                                 ? Colors.greenAccent
                                 : standing.goalDifference < 0
@@ -235,12 +312,12 @@ class StandingsScreen extends StatelessWidget {
                     // Points
                     DataCell(
                       SizedBox(
-                        width: 30,
+                        width: 24,
                         child: Text(
                           '${standing.points}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 13,
                             color: Theme.of(context).colorScheme.secondary,
                           ),
                           textAlign: TextAlign.center,
@@ -254,23 +331,67 @@ class StandingsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // Qualification legend
-        Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: AppTheme.secondaryGreen,
-                borderRadius: BorderRadius.circular(2),
+        // Qualification legend & Acronyms Card
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: AppTheme.glassBoxDecoration(context: context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondaryGreen,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '= Qualified next round',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Top 2 advance to Round of 32',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
-            ),
-          ],
+              const SizedBox(height: 8),
+              const Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                children: [
+                  Text(
+                    'P = Matches Played',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                  Text(
+                    'W = Wins',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                  Text(
+                    'D = Draws',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                  Text(
+                    'L = Loss',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                  Text(
+                    'GD = Goal Difference',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                  Text(
+                    'Pts = Points',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );

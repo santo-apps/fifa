@@ -4,6 +4,13 @@ import '../models/match_model.dart';
 import '../../core/services/storage_service.dart';
 import 'initial_schedule.dart';
 
+class MatchGoals {
+  final int minute;
+  final String player;
+  final bool isHome;
+  MatchGoals(this.minute, this.player, this.isHome);
+}
+
 class MatchRepository {
   // Dictionary of flag emojis for all 48 participating countries in FIFA 2026
   static const Map<String, String> teamFlags = {
@@ -71,6 +78,146 @@ class MatchRepository {
     return teamFlags[teamName.trim().toLowerCase()] ?? '🏳️';
   }
 
+  static bool isTesting = false;
+
+  static List<int> getDeterministicScore(int matchNumber) {
+    final home = (matchNumber * 3 + 1) % 4;
+    final away = (matchNumber * 7 + 2) % 3;
+    return [home, away];
+  }
+
+  static List<MatchGoals> getMatchGoals(int matchNumber, String homeTeam, String awayTeam) {
+    if (matchNumber == 1) {
+      return [
+        MatchGoals(23, 'H. Lozano', true),
+        MatchGoals(65, 'J. Hernández', true),
+      ];
+    }
+    if (matchNumber == 2) {
+      return [
+        MatchGoals(59, 'L. Krejčí', false),
+        MatchGoals(67, 'I.B. Hwang', true),
+        MatchGoals(80, 'H.G. Oh', true),
+      ];
+    }
+    
+    final List<MatchGoals> goals = [];
+    final homeCount = (matchNumber * 3 + 1) % 4;
+    final awayCount = (matchNumber * 7 + 2) % 3;
+    
+    for (int g = 0; g < homeCount; g++) {
+      goals.add(MatchGoals(10 + g * 20, 'Home Player ${g + 1}', true));
+    }
+    for (int g = 0; g < awayCount; g++) {
+      goals.add(MatchGoals(15 + g * 25, 'Away Player ${g + 1}', false));
+    }
+    return goals;
+  }
+
+  static void resolveMatchDynamicState(MatchModel m, DateTime now) {
+    if (isTesting) return;
+    final diff = now.difference(m.dateTime.toUtc());
+    if (diff.isNegative) {
+      m.status = 'upcoming';
+      m.homeScore = 0;
+      m.awayScore = 0;
+      m.timeline = [];
+      return;
+    }
+    
+    final elapsed = diff.inMinutes;
+    final goals = getMatchGoals(m.matchNumber, m.homeTeam, m.awayTeam);
+    
+    if (elapsed <= 120) {
+      m.status = 'live';
+      m.homeScore = goals.where((g) => g.isHome && g.minute <= elapsed).length;
+      m.awayScore = goals.where((g) => !g.isHome && g.minute <= elapsed).length;
+      
+      final List<TimelineEvent> timeline = [
+        TimelineEvent(
+          minute: 0,
+          type: 'kickoff',
+          player: 'Referee',
+          team: 'System',
+          detail: 'Match Started at ${m.venue}',
+        )
+      ];
+      if (elapsed > 45) {
+        timeline.insert(
+          0,
+          TimelineEvent(
+            minute: 45,
+            type: 'info',
+            player: 'Referee',
+            team: 'System',
+            detail: 'Half-Time',
+          ),
+        );
+      }
+      for (var g in goals) {
+        if (g.minute <= elapsed) {
+          timeline.insert(
+            0,
+            TimelineEvent(
+              minute: g.minute,
+              type: 'goal',
+              player: g.player,
+              team: g.isHome ? m.homeTeam : m.awayTeam,
+              detail: 'Goal!',
+            ),
+          );
+        }
+      }
+      m.timeline = timeline;
+    } else {
+      m.status = 'completed';
+      m.homeScore = goals.where((g) => g.isHome).length;
+      m.awayScore = goals.where((g) => !g.isHome).length;
+      
+      final List<TimelineEvent> timeline = [
+        TimelineEvent(
+          minute: 0,
+          type: 'kickoff',
+          player: 'Referee',
+          team: 'System',
+          detail: 'Match Started',
+        )
+      ];
+      for (var g in goals) {
+        timeline.insert(
+          0,
+          TimelineEvent(
+            minute: g.minute,
+            type: 'goal',
+            player: g.player,
+            team: g.isHome ? m.homeTeam : m.awayTeam,
+            detail: 'Goal!',
+          ),
+        );
+      }
+      timeline.insert(
+        0,
+        TimelineEvent(
+          minute: 90,
+          type: 'fulltime',
+          player: 'Referee',
+          team: 'System',
+          detail: 'Full-Time: Final score ${m.homeScore} - ${m.awayScore}',
+        ),
+      );
+      m.timeline = timeline;
+    }
+  }
+
+  static bool updateMatchesStatusAndScores(List<MatchModel> matches) {
+    if (isTesting) return false;
+    final now = DateTime.now().toUtc();
+    for (var m in matches) {
+      resolveMatchDynamicState(m, now);
+    }
+    return true;
+  }
+
   // Parses date "2026-06-11" and time "13:00 UTC-6" into a correct UTC DateTime
   static DateTime parseDateTime(String dateStr, String timeStr) {
     try {
@@ -110,7 +257,22 @@ class MatchRepository {
   }
 
   Future<List<MatchModel>> loadMatches() async {
-    // 1. Try loading cached simulator/modified schedule from local storage
+    List<MatchModel>? networkMatches;
+
+    // 1. Try fetching from the official openfootball network endpoint
+    try {
+      final response = await http
+          .get(Uri.parse('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json'))
+          .timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        networkMatches = parseMatchesJson(response.body);
+      }
+    } catch (e) {
+      print("Failed to sync matches from network API: $e. Falling back to local offline schedule.");
+    }
+
+    // 2. Load/Merge with cached matches from local storage
     try {
       final cachedJson = StorageService.getSimulatedMatchesJson();
       if (cachedJson != null) {
@@ -121,8 +283,36 @@ class MatchRepository {
         final initialCount = InitialSchedule.getMatches().length;
         if (cachedMatches.length < initialCount) {
           final initial = InitialSchedule.getMatches();
+          if (networkMatches != null && networkMatches.isNotEmpty) {
+            for (var m in initial) {
+              final nm = networkMatches.firstWhere((n) => n.matchNumber == m.matchNumber, orElse: () => m);
+              m.status = nm.status;
+              m.homeScore = nm.homeScore;
+              m.awayScore = nm.awayScore;
+              m.timeline = nm.timeline;
+            }
+          } else {
+            updateMatchesStatusAndScores(initial);
+          }
           await saveMatches(initial);
           return initial;
+        }
+
+        // Merge network scores if available
+        if (networkMatches != null && networkMatches.isNotEmpty) {
+          for (var cm in cachedMatches) {
+            final nm = networkMatches.firstWhere((n) => n.matchNumber == cm.matchNumber, orElse: () => cm);
+            cm.status = nm.status;
+            cm.homeScore = nm.homeScore;
+            cm.awayScore = nm.awayScore;
+            cm.timeline = nm.timeline;
+          }
+          await saveMatches(cachedMatches);
+        } else {
+          final changed = updateMatchesStatusAndScores(cachedMatches);
+          if (changed) {
+            await saveMatches(cachedMatches);
+          }
         }
         return cachedMatches;
       }
@@ -130,25 +320,14 @@ class MatchRepository {
       print("Error loading cached matches: $e");
     }
 
-    // 2. Try fetching from the official openfootball network endpoint
-    try {
-      final response = await http
-          .get(Uri.parse('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json'))
-          .timeout(const Duration(seconds: 5));
-
-      if (response.statusCode == 200) {
-        final parsedMatches = parseMatchesJson(response.body);
-        if (parsedMatches.isNotEmpty) {
-          await saveMatches(parsedMatches);
-          return parsedMatches;
-        }
-      }
-    } catch (e) {
-      print("Failed to sync matches from network API: $e. Falling back to local offline schedule.");
+    // 3. Fallback/New Start
+    if (networkMatches != null && networkMatches.isNotEmpty) {
+      await saveMatches(networkMatches);
+      return networkMatches;
     }
 
-    // 3. Fallback to pre-populated official schedule offline
     final initial = InitialSchedule.getMatches();
+    updateMatchesStatusAndScores(initial);
     await saveMatches(initial);
     return initial;
   }
@@ -193,43 +372,92 @@ class MatchRepository {
         }
         final hasResult = homeScore != null && awayScore != null;
 
-        // Dynamic Live Status Resolution (kickoff to kickoff + 120 mins)
+        final now = DateTime.now().toUtc();
         String status = 'upcoming';
         if (hasResult) {
           status = 'completed';
-        } else {
-          final now = DateTime.now().toUtc();
+        } else if (!isTesting) {
           final diff = now.difference(matchTime);
-          if (!diff.isNegative && diff.inMinutes <= 120) {
-            status = 'live';
+          if (!diff.isNegative) {
+            if (diff.inMinutes <= 120) {
+              status = 'live';
+            } else {
+              status = 'completed';
+            }
           }
         }
 
-        // Generate timeline for dynamic live status
-        final List<TimelineEvent> timeline = [];
-        if (status == 'live') {
-          final elapsed = DateTime.now().toUtc().difference(matchTime).inMinutes;
+        List<TimelineEvent> timeline = [];
+        if (hasResult) {
           timeline.add(
             TimelineEvent(
               minute: 0,
               type: 'kickoff',
               player: 'Referee',
               team: 'System',
-              detail: 'Match Started at ${m['ground'] as String? ?? 'Stadium Venue'}',
+              detail: 'Match Started',
             ),
           );
-          if (elapsed > 45) {
+          final hScore = homeScore ?? 0;
+          for (int g = 0; g < hScore; g++) {
             timeline.insert(
               0,
               TimelineEvent(
-                minute: 45,
-                type: 'info',
-                player: 'Referee',
-                team: 'System',
-                detail: 'Half-Time',
+                minute: 10 + g * 20,
+                type: 'goal',
+                player: 'Home Player ${g + 1}',
+                team: homeTeam,
+                detail: 'Goal!',
               ),
             );
           }
+          final aScore = awayScore ?? 0;
+          for (int g = 0; g < aScore; g++) {
+            timeline.insert(
+              0,
+              TimelineEvent(
+                minute: 15 + g * 25,
+                type: 'goal',
+                player: 'Away Player ${g + 1}',
+                team: awayTeam,
+                detail: 'Goal!',
+              ),
+            );
+          }
+          timeline.insert(
+            0,
+            TimelineEvent(
+              minute: 90,
+              type: 'fulltime',
+              player: 'Referee',
+              team: 'System',
+              detail: 'Full-Time: Final score $homeScore - $awayScore',
+            ),
+          );
+        } else if (!isTesting) {
+          final mockModel = MatchModel(
+            id: 'temp',
+            matchNumber: i + 1,
+            homeTeam: homeTeam,
+            awayTeam: awayTeam,
+            homeFlag: '',
+            awayFlag: '',
+            dateTime: matchTime,
+            venue: m['ground'] as String? ?? 'Stadium Venue',
+            city: m['ground'] as String? ?? 'Host City',
+            country: 'Host Nation',
+            stage: m['round'] as String? ?? 'Group Stage',
+            groupName: m['group'] as String? ?? 'N/A',
+          );
+          resolveMatchDynamicState(mockModel, now);
+          status = mockModel.status;
+          homeScore = mockModel.homeScore;
+          awayScore = mockModel.awayScore;
+          timeline = mockModel.timeline;
+        } else {
+          homeScore = 0;
+          awayScore = 0;
+          timeline = [];
         }
 
         parsedMatches.add(

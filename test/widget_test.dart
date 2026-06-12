@@ -9,6 +9,7 @@ import 'package:fifa/data/repositories/match_repository.dart';
 
 void main() {
   setUp(() async {
+    MatchRepository.isTesting = true;
     SharedPreferences.setMockInitialValues({
       'favorite_teams': ['mexico'],
       'bookmarked_matches': ['match_1'],
@@ -167,6 +168,7 @@ void main() {
     });
 
     test('Dynamic live status resolution based on scheduled kickoff', () {
+      MatchRepository.isTesting = false;
       final kickoff = DateTime.now().toUtc().subtract(const Duration(minutes: 30));
       final dateStr = "${kickoff.year}-${kickoff.month.toString().padLeft(2, '0')}-${kickoff.day.toString().padLeft(2, '0')}";
       final timeStr = "${kickoff.hour.toString().padLeft(2, '0')}:${kickoff.minute.toString().padLeft(2, '0')} UTC";

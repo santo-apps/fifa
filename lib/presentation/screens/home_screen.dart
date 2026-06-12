@@ -11,8 +11,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Current date set to June 10, 2026, to mimic the user's test timing
-    final mockCurrentDate = DateTime(2026, 6, 10, 18, 0);
+    final currentDate = DateTime.now();
     // Opening match is June 11, 2026, at 22:00 UTC
     final openingMatchDate = DateTime.utc(2026, 6, 11, 22, 0);
 
@@ -58,7 +57,7 @@ class HomeScreen extends StatelessWidget {
           }
 
           final live = scheduleProv.liveMatches;
-          final today = scheduleProv.getTodayMatches(mockCurrentDate);
+          final today = scheduleProv.getTodayMatches(currentDate);
           final upcoming = scheduleProv.getUpcomingMatches(3);
 
           return RefreshIndicator(
@@ -95,7 +94,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    height: 190,
+                    height: 210,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -66,7 +66,13 @@ class MatchCard extends StatelessWidget {
                           ),
                         ] else ...[
                           Text(
-                            match.status == 'completed' ? 'FINAL' : 'UPCOMING',
+                            match.status == 'completed'
+                                ? (match.homeScore > match.awayScore
+                                    ? 'WON BY ${match.homeTeam.toUpperCase()}'
+                                    : match.awayScore > match.homeScore
+                                        ? 'WON BY ${match.awayTeam.toUpperCase()}'
+                                        : 'DRAWN')
+                                : 'UPCOMING',
                             style: TextStyle(
                               color: match.status == 'completed'
                                   ? (isDark ? Colors.white60 : Colors.black54)

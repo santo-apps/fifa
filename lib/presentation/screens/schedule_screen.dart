@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../data/models/match_model.dart';
 import '../../providers/schedule_provider.dart';
 import '../widgets/match_card.dart';
 import '../../core/constants/theme.dart';
@@ -12,151 +13,181 @@ class ScheduleScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tournament Schedule'),
-      ),
-      body: Consumer<ScheduleProvider>(
-        builder: (context, scheduleProv, _) {
-          if (scheduleProv.isLoading) {
-            return Center(
-              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary),
-            );
-          }
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Tournament Schedule'),
+          bottom: TabBar(
+            indicatorColor: Theme.of(context).colorScheme.secondary,
+            labelColor: Theme.of(context).colorScheme.secondary,
+            unselectedLabelColor: isDark
+                ? AppTheme.darkTextSecondary
+                : AppTheme.lightTextSecondary,
+            tabs: const [
+              Tab(text: 'Fixtures'),
+              Tab(text: 'Results'),
+            ],
+          ),
+        ),
+        body: Consumer<ScheduleProvider>(
+          builder: (context, scheduleProv, _) {
+            if (scheduleProv.isLoading) {
+              return Center(
+                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.secondary),
+              );
+            }
 
-          final matches = scheduleProv.filteredMatches;
-          final stages = scheduleProv.allStages;
-          final groups = scheduleProv.allGroups;
-          final teams = scheduleProv.allTeams;
+            final allFiltered = scheduleProv.filteredMatches;
+            final fixtures = allFiltered.where((m) => m.status != 'completed').toList();
+            final results = allFiltered.where((m) => m.status == 'completed').toList();
+            // Sort completed results descending (most recent completed matches first)
+            results.sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
-          return Column(
-            children: [
-              // Filter chips scrollable bar
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: [
-                    // Stage Filter
-                    _buildFilterChip(
-                      context: context,
-                      label: scheduleProv.selectedStage.isEmpty
-                          ? 'All Stages'
-                          : scheduleProv.selectedStage,
-                      isActive: scheduleProv.selectedStage.isNotEmpty,
-                      onTap: () => _showStagePicker(context, scheduleProv, stages),
-                    ),
-                    const SizedBox(width: 8),
+            final stages = scheduleProv.allStages;
+            final groups = scheduleProv.allGroups;
+            final teams = scheduleProv.allTeams;
 
-                    // Group Filter
-                    _buildFilterChip(
-                      context: context,
-                      label: scheduleProv.selectedGroup.isEmpty
-                          ? 'All Groups'
-                          : scheduleProv.selectedGroup,
-                      isActive: scheduleProv.selectedGroup.isNotEmpty,
-                      onTap: () => _showGroupPicker(context, scheduleProv, groups),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Team Filter
-                    _buildFilterChip(
-                      context: context,
-                      label: scheduleProv.selectedTeam.isEmpty
-                          ? 'Filter by Team'
-                          : scheduleProv.selectedTeam,
-                      isActive: scheduleProv.selectedTeam.isNotEmpty,
-                      onTap: () => _showTeamPicker(context, scheduleProv, teams),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Date Filter
-                    _buildFilterChip(
-                      context: context,
-                      label: scheduleProv.selectedDate == null
-                          ? 'Select Date'
-                          : DateFormat('MMM d').format(scheduleProv.selectedDate!),
-                      isActive: scheduleProv.selectedDate != null,
-                      onTap: () => _showDatePicker(context, scheduleProv),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Active filter indicators & Reset button
-              if (scheduleProv.selectedStage.isNotEmpty ||
-                  scheduleProv.selectedGroup.isNotEmpty ||
-                  scheduleProv.selectedTeam.isNotEmpty ||
-                  scheduleProv.selectedDate != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            return Column(
+              children: [
+                // Filter chips scrollable bar
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Found ${matches.length} matches',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                      // Stage Filter
+                      _buildFilterChip(
+                        context: context,
+                        label: scheduleProv.selectedStage.isEmpty
+                            ? 'All Stages'
+                            : scheduleProv.selectedStage,
+                        isActive: scheduleProv.selectedStage.isNotEmpty,
+                        onTap: () => _showStagePicker(context, scheduleProv, stages),
                       ),
-                      GestureDetector(
-                        onTap: scheduleProv.clearFilters,
-                        child: Row(
-                          children: [
-                            Icon(Icons.clear_all_rounded, size: 16, color: Theme.of(context).colorScheme.secondary),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Clear Filters',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.secondary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(width: 8),
+
+                      // Group Filter
+                      _buildFilterChip(
+                        context: context,
+                        label: scheduleProv.selectedGroup.isEmpty
+                            ? 'All Groups'
+                            : scheduleProv.selectedGroup,
+                        isActive: scheduleProv.selectedGroup.isNotEmpty,
+                        onTap: () => _showGroupPicker(context, scheduleProv, groups),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Team Filter
+                      _buildFilterChip(
+                        context: context,
+                        label: scheduleProv.selectedTeam.isEmpty
+                            ? 'Filter by Team'
+                            : scheduleProv.selectedTeam,
+                        isActive: scheduleProv.selectedTeam.isNotEmpty,
+                        onTap: () => _showTeamPicker(context, scheduleProv, teams),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Date Filter
+                      _buildFilterChip(
+                        context: context,
+                        label: scheduleProv.selectedDate == null
+                            ? 'Select Date'
+                            : DateFormat('MMM d').format(scheduleProv.selectedDate!),
+                        isActive: scheduleProv.selectedDate != null,
+                        onTap: () => _showDatePicker(context, scheduleProv),
                       ),
                     ],
                   ),
                 ),
 
-              const SizedBox(height: 8),
-
-              // Match schedule listing
-              Expanded(
-                child: matches.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.search_off_rounded, size: 48, color: Colors.grey),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'No matches matches your filters',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: scheduleProv.clearFilters,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryGreen,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Reset Filters'),
-                            ),
-                          ],
+                // Active filter indicators & Reset button
+                if (scheduleProv.selectedStage.isNotEmpty ||
+                    scheduleProv.selectedGroup.isNotEmpty ||
+                    scheduleProv.selectedTeam.isNotEmpty ||
+                    scheduleProv.selectedDate != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Found ${allFiltered.length} matches',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: matches.length,
-                        itemBuilder: (context, idx) {
-                          return MatchCard(match: matches[idx]);
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
+                        GestureDetector(
+                          onTap: scheduleProv.clearFilters,
+                          child: Row(
+                            children: [
+                              Icon(Icons.clear_all_rounded, size: 16, color: Theme.of(context).colorScheme.secondary),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Clear Filters',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 8),
+
+                // TabBarView showing Fixtures or Results
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildMatchesListSection(context, fixtures, scheduleProv),
+                      _buildMatchesListSection(context, results, scheduleProv),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
+    );
+  }
+
+  Widget _buildMatchesListSection(
+      BuildContext context, List<MatchModel> matches, ScheduleProvider scheduleProv) {
+    if (matches.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.search_off_rounded, size: 48, color: Colors.grey),
+            const SizedBox(height: 12),
+            const Text(
+              'No matches matches your filters',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: scheduleProv.clearFilters,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryGreen,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Reset Filters'),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: matches.length,
+      itemBuilder: (context, idx) {
+        return MatchCard(match: matches[idx]);
+      },
     );
   }
 
