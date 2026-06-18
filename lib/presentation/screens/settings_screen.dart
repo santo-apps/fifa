@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/notification_provider.dart';
-import '../../providers/schedule_provider.dart';
 import '../../core/constants/theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -14,8 +13,8 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: Consumer3<ThemeProvider, NotificationProvider, ScheduleProvider>(
-        builder: (context, themeProv, notifProv, scheduleProv, _) {
+      body: Consumer2<ThemeProvider, NotificationProvider>(
+        builder: (context, themeProv, notifProv, _) {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -69,43 +68,6 @@ class SettingsScreen extends StatelessWidget {
                           notifProv.toggleGlobalNotifications(val),
                     ),
                   ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Section 2: Reset
-              _buildSectionHeader(context, 'DATABASE ACTIONS'),
-              Container(
-                decoration: AppTheme.glassBoxDecoration(context: context),
-                child: ListTile(
-                  title: const Text(
-                    'Reset Tournament Schedule',
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                  subtitle: const Text(
-                    'Reverts all simulated scores and timeline events.',
-                    style: TextStyle(fontSize: 11),
-                  ),
-                  trailing: const Icon(
-                    Icons.restart_alt_rounded,
-                    color: Colors.redAccent,
-                  ),
-                  onTap: () async {
-                    await scheduleProv.resetSchedule();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Database reset to defaults successfully.',
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
                 ),
               ),
             ],

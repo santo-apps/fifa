@@ -8,7 +8,8 @@ class MatchGoals {
   final int minute;
   final String player;
   final bool isHome;
-  MatchGoals(this.minute, this.player, this.isHome);
+  final String detail;
+  MatchGoals(this.minute, this.player, this.isHome, {this.detail = 'Goal!'});
 }
 
 class MatchRepository {
@@ -89,15 +90,88 @@ class MatchRepository {
   static List<MatchGoals> getMatchGoals(int matchNumber, String homeTeam, String awayTeam) {
     if (matchNumber == 1) {
       return [
-        MatchGoals(23, 'H. Lozano', true),
-        MatchGoals(65, 'J. Hernández', true),
+        MatchGoals(9, 'Julián Quiñones', true),
+        MatchGoals(67, 'Raúl Jiménez', true),
       ];
     }
     if (matchNumber == 2) {
       return [
-        MatchGoals(59, 'L. Krejčí', false),
-        MatchGoals(67, 'I.B. Hwang', true),
-        MatchGoals(80, 'H.G. Oh', true),
+        MatchGoals(59, 'Ladislav Krejcí', false),
+        MatchGoals(67, 'Hwang In-Beom', true),
+        MatchGoals(80, 'Oh Hyeon-Gyu', true),
+      ];
+    }
+    if (matchNumber == 7) {
+      return [
+        MatchGoals(21, 'Jovo Lukić', false),
+        MatchGoals(78, 'Cyle Larin', true),
+      ];
+    }
+    if (matchNumber == 8) {
+      return [
+        MatchGoals(17, 'Breel Embolo', false, detail: 'Penalty Goal!'),
+        MatchGoals(90 + 4, 'Boualem Khoukhi', true),
+      ];
+    }
+    if (matchNumber == 13) {
+      return [
+        MatchGoals(21, 'Ismael Saibari', false),
+        MatchGoals(32, 'Vinícius Júnior', true),
+      ];
+    }
+    if (matchNumber == 14) {
+      return [
+        MatchGoals(28, 'John McGinn', false),
+      ];
+    }
+    if (matchNumber == 19) {
+      return [
+        MatchGoals(7, 'Damian Bobadilla', true, detail: 'Own Goal!'),
+        MatchGoals(31, 'Folarin Balogun', true),
+        MatchGoals(45 + 5, 'Folarin Balogun', true),
+        MatchGoals(73, 'Mauricio', false),
+        MatchGoals(90 + 8, 'Giovanni Reyna', true),
+      ];
+    }
+    if (matchNumber == 20) {
+      return [
+        MatchGoals(27, 'Nestory Irankunda', true),
+        MatchGoals(75, 'Connor Metcalfe', true),
+      ];
+    }
+    if (matchNumber == 25) {
+      return [
+        MatchGoals(6, 'Felix Nmecha', true),
+        MatchGoals(21, 'Livano Comenencia', false),
+        MatchGoals(38, 'Nico Schlotterbeck', true),
+        MatchGoals(45 + 5, 'Kai Havertz', true, detail: 'Penalty Goal!'),
+        MatchGoals(47, 'Jamal Musiala', true),
+        MatchGoals(68, 'Nathaniel Brown', true),
+        MatchGoals(78, 'Deniz Undav', true),
+        MatchGoals(88, 'Kai Havertz', true),
+      ];
+    }
+    if (matchNumber == 26) {
+      return [
+        MatchGoals(90, 'Amad Diallo', true),
+      ];
+    }
+    if (matchNumber == 31) {
+      return [
+        MatchGoals(51, 'Virgil van Dijk', true),
+        MatchGoals(57, 'Keito Nakamura', false),
+        MatchGoals(64, 'Crysencio Summerville', true),
+        MatchGoals(88, 'Daichi Kamada', false),
+      ];
+    }
+    if (matchNumber == 32) {
+      return [
+        MatchGoals(7, 'Yasin Ayari', true),
+        MatchGoals(30, 'Alexander Isak', true),
+        MatchGoals(43, 'Omar Rekik', false),
+        MatchGoals(59, 'Viktor Gyökeres', true),
+        MatchGoals(84, 'Mattias Svanberg', true),
+        MatchGoals(90 + 6, 'Yasin Ayari', true),
       ];
     }
     
@@ -163,7 +237,7 @@ class MatchRepository {
               type: 'goal',
               player: g.player,
               team: g.isHome ? m.homeTeam : m.awayTeam,
-              detail: 'Goal!',
+              detail: g.detail,
             ),
           );
         }
@@ -191,7 +265,7 @@ class MatchRepository {
             type: 'goal',
             player: g.player,
             team: g.isHome ? m.homeTeam : m.awayTeam,
-            detail: 'Goal!',
+            detail: g.detail,
           ),
         );
       }
@@ -260,16 +334,18 @@ class MatchRepository {
     List<MatchModel>? networkMatches;
 
     // 1. Try fetching from the official openfootball network endpoint
-    try {
-      final response = await http
-          .get(Uri.parse('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json'))
-          .timeout(const Duration(seconds: 5));
+    if (!isTesting) {
+      try {
+        final response = await http
+            .get(Uri.parse('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json'))
+            .timeout(const Duration(seconds: 5));
 
-      if (response.statusCode == 200) {
-        networkMatches = parseMatchesJson(response.body);
+        if (response.statusCode == 200) {
+          networkMatches = parseMatchesJson(response.body);
+        }
+      } catch (e) {
+        print("Failed to sync matches from network API: $e. Falling back to local offline schedule.");
       }
-    } catch (e) {
-      print("Failed to sync matches from network API: $e. Falling back to local offline schedule.");
     }
 
     // 2. Load/Merge with cached matches from local storage
@@ -361,7 +437,7 @@ class MatchRepository {
         final timeStr = m['time'] as String? ?? '12:00 UTC';
         final matchTime = parseDateTime(dateStr, timeStr);
         
-        // Defensive Score Parsing (strings, integers, nulls)
+        // Defensive Score Parsing (strings, integers, nulls, and nested score.ft list)
         int? homeScore;
         int? awayScore;
         if (m['score1'] != null) {
@@ -369,6 +445,16 @@ class MatchRepository {
         }
         if (m['score2'] != null) {
           awayScore = int.tryParse(m['score2'].toString());
+        }
+        if (homeScore == null && awayScore == null && m['score'] != null) {
+          final scoreMap = m['score'];
+          if (scoreMap is Map) {
+            final ft = scoreMap['ft'];
+            if (ft is List && ft.length >= 2) {
+              homeScore = int.tryParse(ft[0].toString());
+              awayScore = int.tryParse(ft[1].toString());
+            }
+          }
         }
         final hasResult = homeScore != null && awayScore != null;
 
@@ -398,32 +484,86 @@ class MatchRepository {
               detail: 'Match Started',
             ),
           );
-          final hScore = homeScore ?? 0;
-          for (int g = 0; g < hScore; g++) {
-            timeline.insert(
-              0,
-              TimelineEvent(
-                minute: 10 + g * 20,
-                type: 'goal',
-                player: 'Home Player ${g + 1}',
-                team: homeTeam,
-                detail: 'Goal!',
-              ),
-            );
+
+          // Parse actual player names and goal details if available from feed
+          final List<dynamic> g1 = m['goals1'] is List ? m['goals1'] as List : [];
+          final List<dynamic> g2 = m['goals2'] is List ? m['goals2'] as List : [];
+          final List<TimelineEvent> goalEvents = [];
+
+          for (var goal in g1) {
+            if (goal is Map) {
+              final name = goal['name'] as String? ?? 'Home Player';
+              final minStr = goal['minute']?.toString() ?? '10';
+              final minute = int.tryParse(minStr.split('+')[0]) ?? 10;
+              final isPenalty = goal['penalty'] == true;
+              final isOwnGoal = goal['owngoal'] == true;
+              goalEvents.add(
+                TimelineEvent(
+                  minute: minute,
+                  type: 'goal',
+                  player: name,
+                  team: homeTeam,
+                  detail: isOwnGoal ? 'Own Goal!' : (isPenalty ? 'Penalty Goal!' : 'Goal!'),
+                ),
+              );
+            }
           }
-          final aScore = awayScore ?? 0;
-          for (int g = 0; g < aScore; g++) {
-            timeline.insert(
-              0,
-              TimelineEvent(
-                minute: 15 + g * 25,
-                type: 'goal',
-                player: 'Away Player ${g + 1}',
-                team: awayTeam,
-                detail: 'Goal!',
-              ),
-            );
+
+          for (var goal in g2) {
+            if (goal is Map) {
+              final name = goal['name'] as String? ?? 'Away Player';
+              final minStr = goal['minute']?.toString() ?? '15';
+              final minute = int.tryParse(minStr.split('+')[0]) ?? 15;
+              final isPenalty = goal['penalty'] == true;
+              final isOwnGoal = goal['owngoal'] == true;
+              goalEvents.add(
+                TimelineEvent(
+                  minute: minute,
+                  type: 'goal',
+                  player: name,
+                  team: awayTeam,
+                  detail: isOwnGoal ? 'Own Goal!' : (isPenalty ? 'Penalty Goal!' : 'Goal!'),
+                ),
+              );
+            }
           }
+
+          // Sort goal events chronologically before reverse-inserting
+          goalEvents.sort((a, b) => a.minute.compareTo(b.minute));
+          for (var ge in goalEvents) {
+            timeline.insert(0, ge);
+          }
+
+          // Fallback to generated goals if list is empty but scores are non-zero
+          if (goalEvents.isEmpty && (homeScore > 0 || awayScore > 0)) {
+            final hScore = homeScore;
+            for (int g = 0; g < hScore; g++) {
+              timeline.insert(
+                0,
+                TimelineEvent(
+                  minute: 10 + g * 20,
+                  type: 'goal',
+                  player: 'Home Player ${g + 1}',
+                  team: homeTeam,
+                  detail: 'Goal!',
+                ),
+              );
+            }
+            final aScore = awayScore;
+            for (int g = 0; g < aScore; g++) {
+              timeline.insert(
+                0,
+                TimelineEvent(
+                  minute: 15 + g * 25,
+                  type: 'goal',
+                  player: 'Away Player ${g + 1}',
+                  team: awayTeam,
+                  detail: 'Goal!',
+                ),
+              );
+            }
+          }
+
           timeline.insert(
             0,
             TimelineEvent(
