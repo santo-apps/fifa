@@ -149,8 +149,7 @@ class MatchCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Builder(
                               builder: (context) {
-                                final elapsed = DateTime.now().toUtc().difference(match.dateTime.toUtc()).inMinutes;
-                                final displayMin = elapsed < 0 ? 0 : (elapsed > 120 ? 120 : elapsed);
+                                final displayMin = match.getDisplayElapsedMinutes(DateTime.now());
                                 return Text(
                                   '$displayMin\'',
                                   style: const TextStyle(

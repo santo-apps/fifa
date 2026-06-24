@@ -41,9 +41,9 @@ class NotificationService {
         if (androidImplementation != null) {
           await androidImplementation.createNotificationChannel(
             const AndroidNotificationChannel(
-              'fifa_2026_matches',
+              'wc_2026_matches',
               'Match Reminders',
-              description: 'Notifications for upcoming and live FIFA matches',
+              description: 'Notifications for upcoming and live WC matches',
               importance: Importance.max,
               playSound: true,
               enableVibration: true,
@@ -89,18 +89,21 @@ class NotificationService {
     required String body,
   }) async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'fifa_2026_matches',
+      'wc_2026_matches',
       'Match Reminders',
-      channelDescription: 'Notifications for upcoming and live FIFA matches',
+      channelDescription: 'Notifications for upcoming and live WC matches',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
+      visibility: NotificationVisibility.public,
     );
 
     const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      presentBanner: true,
+      presentList: true,
     );
 
     const NotificationDetails details = NotificationDetails(
@@ -122,18 +125,21 @@ class NotificationService {
     required DateTime scheduledTime,
   }) async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'fifa_2026_matches',
+      'wc_2026_matches',
       'Match Reminders',
-      channelDescription: 'Notifications for upcoming and live FIFA matches',
+      channelDescription: 'Notifications for upcoming and live WC matches',
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
+      visibility: NotificationVisibility.public,
     );
 
     const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      presentBanner: true,
+      presentList: true,
     );
 
     const NotificationDetails details = NotificationDetails(

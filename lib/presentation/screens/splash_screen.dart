@@ -84,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // FIFA 2026 Emblem Card with elegant gold shadow
+                      // WC 2026 Emblem Card with elegant gold shadow
                       Container(
                         width: 170,
                         height: 170,
@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 32),
                       const Text(
-                        'FIFA 2026',
+                        'WC 2026',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 36,

@@ -100,7 +100,7 @@ class StandingsProvider extends ChangeNotifier {
       }
     }
 
-    // 3. Sort team lists in each group according to FIFA rules
+    // 3. Sort team lists in each group according to WC rules
     final Map<String, List<TeamStanding>> sortedStandings = {};
     tempStandings.forEach((group, teamMap) {
       final list = teamMap.values.toList();

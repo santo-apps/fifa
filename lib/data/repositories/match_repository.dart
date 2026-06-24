@@ -13,7 +13,7 @@ class MatchGoals {
 }
 
 class MatchRepository {
-  // Dictionary of flag emojis for all 48 participating countries in FIFA 2026
+  // Dictionary of flag emojis for all 48 participating countries in WC 2026
   static const Map<String, String> teamFlags = {
     'mexico': '🇲🇽',
     'south africa': '🇿🇦',
@@ -77,6 +77,75 @@ class MatchRepository {
 
   static String getFlag(String teamName) {
     return teamFlags[teamName.trim().toLowerCase()] ?? '🏳️';
+  }
+
+  static final Map<String, List<String>> _countryPlayers = {
+    'mexico': ['Santiago Giménez', 'Hirving Lozano', 'Edson Álvarez', 'Luis Chávez', 'Orbelín Pineda', 'Henry Martín', 'Uriel Antuna', 'Jesús Gallardo'],
+    'south africa': ['Percy Tau', 'Themba Zwane', 'Teboho Mokoena', 'Evidence Makgopa', 'Thapelo Morena', 'Aubrey Modiba', 'Mothobi Mvala', 'Ronwen Williams'],
+    'south korea': ['Son Heung-Min', 'Hwang Hee-Chan', 'Lee Kang-In', 'Cho Gue-Sung', 'Hwang In-Beom', 'Kim Min-Jae', 'Lee Jae-Sung', 'Jeong Woo-Yeong'],
+    'czech republic': ['Patrik Schick', 'Tomáš Souček', 'Adam Hložek', 'Alex Král', 'Ladislav Krejčí', 'Václav Černý', 'Jan Kuchta', 'Tomáš Holeš'],
+    'czechia': ['Patrik Schick', 'Tomáš Souček', 'Adam Hložek', 'Alex Král', 'Ladislav Krejčí', 'Václav Černý', 'Jan Kuchta', 'Tomáš Holeš'],
+    'canada': ['Alphonso Davies', 'Jonathan David', 'Cyle Larin', 'Tajon Buchanan', 'Stephen Eustáquio', 'Ismaël Koné', 'Alistair Johnston', 'Kamal Miller'],
+    'bosnia & herzegovina': ['Edin Džeko', 'Miralem Pjanić', 'Sead Kolašinac', 'Ermedin Demirović', 'Rade Krunić', 'Amar Dedić', 'Benjamin Tahirović', 'Jovo Lukić'],
+    'bosnia and herzegovina': ['Edin Džeko', 'Miralem Pjanić', 'Sead Kolašinac', 'Ermedin Demirović', 'Rade Krunić', 'Amar Dedić', 'Benjamin Tahirović', 'Jovo Lukić'],
+    'qatar': ['Akram Afif', 'Almoez Ali', 'Hassan Al-Haydos', 'Boualem Khoukhi', 'Abdulaziz Hatem', 'Homam Ahmed', 'Lucas Mendes', 'Bassam Al-Rawi'],
+    'switzerland': ['Granit Xhaka', 'Xherdan Shaqiri', 'Breel Embolo', 'Manuel Akanji', 'Yann Sommer', 'Denis Zakaria', 'Remo Freuler', 'Ruben Vargas'],
+    'brazil': ['Vinícius Júnior', 'Rodrygo', 'Neymar Jr', 'Bruno Guimarães', 'Lucas Paquetá', 'Raphinha', 'Gabriel Martinelli', 'Casemiro'],
+    'morocco': ['Achraf Hakimi', 'Hakim Ziyech', 'Youssef En-Nesyri', 'Sofyan Amrabat', 'Azzedine Ounahi', 'Amine Harit', 'Brahim Díaz', 'Ismael Saibari'],
+    'haiti': ['Frantzdy Pierrot', 'Duckens Nazon', 'Derrick Etienne Jr', 'Carlens Arcus', 'Danley Jean Jacques', 'Wilde-Donald Guerrier', 'Ricardo Adé'],
+    'scotland': ['John McGinn', 'Scott McTominay', 'Andrew Robertson', 'Callum McGregor', 'Che Adams', 'Billy Gilmour', 'Ryan Christie', 'Lewis Ferguson'],
+    'usa': ['Christian Pulisic', 'Weston McKennie', 'Timothy Weah', 'Folarin Balogun', 'Giovanni Reyna', 'Tyler Adams', 'Yunus Musah', 'Antonee Robinson'],
+    'united states': ['Christian Pulisic', 'Weston McKennie', 'Timothy Weah', 'Folarin Balogun', 'Giovanni Reyna', 'Tyler Adams', 'Yunus Musah', 'Antonee Robinson'],
+    'paraguay': ['Miguel Almirón', 'Julio Enciso', 'Antonio Sanabria', 'Mathías Villasanti', 'Gustavo Gómez', 'Junior Alonso', 'Damian Bobadilla', 'Mauricio'],
+    'australia': ['Mathew Ryan', 'Jackson Irvine', 'Harry Souttar', 'Mitchell Duke', 'Craig Goodwin', 'Connor Metcalfe', 'Nestory Irankunda', 'Jordan Bos'],
+    'turkey': ['Hakan Çalhanoğlu', 'Arda Güler', 'Kenan Yıldız', 'Kerem Aktürkoğlu', 'Barış Alper Yılmaz', 'Orkun Kökçü', 'Salih Özcan', 'Ferdi Kadıoğlu'],
+    'turkiye': ['Hakan Çalhanoğlu', 'Arda Güler', 'Kenan Yıldız', 'Kerem Aktürkoğlu', 'Barış Alper Yılmaz', 'Orkun Kökçü', 'Salih Özcan', 'Ferdi Kadıoğlu'],
+    'germany': ['Florian Wirtz', 'Jamal Musiala', 'Kai Havertz', 'Leroy Sané', 'İlkay Gündoğan', 'Joshua Kimmich', 'Toni Kroos', 'Nico Schlotterbeck'],
+    'curacao': ['Juninho Bacuna', 'Leandro Bacuna', 'Kenji Gorré', 'Juriën Gaari', 'Gervane Kastaneer', 'Rangelo Janga', 'Livano Comenencia'],
+    'curaçao': ['Juninho Bacuna', 'Leandro Bacuna', 'Kenji Gorré', 'Juriën Gaari', 'Gervane Kastaneer', 'Rangelo Janga', 'Livano Comenencia'],
+    'ivory coast': ['Sébastien Haller', 'Franck Kessié', 'Simon Adingra', 'Seko Fofana', 'Ibrahim Sangaré', 'Ousmane Diomande', 'Amad Diallo', 'Serge Aurier'],
+    'cote d\'ivoire': ['Sébastien Haller', 'Franck Kessié', 'Simon Adingra', 'Seko Fofana', 'Ibrahim Sangaré', 'Ousmane Diomande', 'Amad Diallo', 'Serge Aurier'],
+    'ecuador': ['Enner Valencia', 'Moises Caicedo', 'Piero Hincapié', 'Pervis Estupiñán', 'Kendry Páez', 'Angelo Preciado', 'Willian Pacho', 'Félix Torres'],
+    'netherlands': ['Virgil van Dijk', 'Memphis Depay', 'Cody Gakpo', 'Frenkie de Jong', 'Xavi Simons', 'Denzel Dumfries', 'Matthijs de Ligt', 'Crysencio Summerville'],
+    'japan': ['Kaoru Mitoma', 'Takefusa Kubo', 'Wataru Endo', 'Ritsu Doan', 'Ayase Ueda', 'Takumi Minamino', 'Daichi Kamada', 'Ko Itakura'],
+    'sweden': ['Alexander Isak', 'Viktor Gyökeres', 'Dejan Kulusevski', 'Emil Forsberg', 'Victor Lindelöf', 'Jens Cajuste', 'Yasin Ayari', 'Mattias Svanberg'],
+    'tunisia': ['Youssef Msakni', 'Montassar Talbi', 'Aissa Laïdouni', 'Ellyes Skhiri', 'Hamza Rafia', 'Sayfallah Ltaief', 'Wajdi Kechrida', 'Ali Abdi'],
+    'belgium': ['Kevin De Bruyne', 'Romelu Lukaku', 'Leandro Trossard', 'Jérémy Doku', 'Amadou Onana', 'Lois Openda', 'Wout Faes', 'Youri Tielemans'],
+    'egypt': ['Mohamed Salah', 'Mostafa Mohamed', 'Trezeguet', 'Omar Marmoush', 'Mohamed Elneny', 'Ahmed Hegazi', 'Emam Ashour', 'Zizo'],
+    'iran': ['Mehdi Taremi', 'Sardar Azmoun', 'Alireza Jahanbakhsh', 'Saman Ghoddos', 'Mehdi Ghayedi', 'Shojae Khalilzadeh', 'Ramin Rezaeian'],
+    'new zealand': ['Chris Wood', 'Liborato Cacace', 'Ben Waine', 'Matthew Garbett', 'Joe Bell', 'Sarpreet Singh', 'Marko Stamenic', 'Tyler Bindon'],
+    'spain': ['Rodri', 'Alvaro Morata', 'Lamine Yamal', 'Pedri', 'Gavi', 'Dani Olmo', 'Nico Williams', 'Robin Le Normand'],
+    'cape verde': ['Ryan Mendes', 'Garry Rodrigues', 'Jovane Cabral', 'Bebé', 'Logan Costa', 'Kenny Rocha Santos', 'Jamiro Monteiro'],
+    'cabo verde': ['Ryan Mendes', 'Garry Rodrigues', 'Jovane Cabral', 'Bebé', 'Logan Costa', 'Kenny Rocha Santos', 'Jamiro Monteiro'],
+    'saudi arabia': ['Salem Al-Dawsari', 'Firas Al-Buraikan', 'Saleh Al-Shehri', 'Abdulrahman Ghareeb', 'Mohamed Kanno', 'Saud Abdulhamid', 'Ali Lajami'],
+    'saudia arabia': ['Salem Al-Dawsari', 'Firas Al-Buraikan', 'Saleh Al-Shehri', 'Abdulrahman Ghareeb', 'Mohamed Kanno', 'Saud Abdulhamid', 'Ali Lajami'],
+    'uruguay': ['Federico Valverde', 'Darwin Núñez', 'Luis Suárez', 'Ronald Araújo', 'Facundo Pellistri', 'Nicolás de la Cruz', 'Manuel Ugarte', 'Mathías Olivera'],
+    'france': ['Kylian Mbappé', 'Antoine Griezmann', 'Olivier Giroud', 'Ousmane Dembélé', 'Aurelien Tchouaméni', 'Eduardo Camavinga', 'William Saliba'],
+    'senegal': ['Sadio Mané', 'Nicolas Jackson', 'Ismaïla Sarr', 'Lamine Camara', 'Pape Matar Sarr', 'Kalidou Koulibaly', 'Edouard Mendy'],
+    'iraq': ['Aymen Hussein', 'Ali Jasim', 'Ibrahim Bayesh', 'Mohanad Ali', 'Youssef Amyn', 'Amir Al-Ammari', 'Rebin Sulaka'],
+    'norway': ['Erling Haaland', 'Martin Ødegaard', 'Alexander Sørloth', 'Antonio Nusa', 'Oscar Bobb', 'Sander Berge', 'Julian Ryerson'],
+    'argentina': ['Lionel Messi', 'Lautaro Martínez', 'Julián Álvarez', 'Angel Di María', 'Enzo Fernández', 'Alexis Mac Allister', 'Rodrigo De Paul'],
+    'algeria': ['Riyad Mahrez', 'Baghdad Bounedjah', 'Amine Gouiri', 'Farès Chaïbi', 'Houssem Aouar', 'Ismaël Bennacer', 'Rayan Aït-Nouri'],
+    'austria': ['Marcel Sabitzer', 'Christoph Baumgartner', 'Konrad Laimer', 'Michael Gregoritsch', 'Patrick Wimmer', 'Stefan Lainer', 'Kevin Danso'],
+    'jordan': ['Musa Al-Taamari', 'Yazan Al-Naimat', 'Ali Olwan', 'Nizar Al-Rashdan', 'Mahmoud Al-Mardi', 'Ehsan Haddad'],
+    'portugal': ['Cristiano Ronaldo', 'Bruno Fernandes', 'Bernardo Silva', 'Rafael Leão', 'João Félix', 'Diogo Jota', 'Vitinha', 'Rúben Dias'],
+    'dr congo': ['Yoane Wissa', 'Cédric Bakambu', 'Meschack Elia', 'Samuel Moutoussamy', 'Charles Pickel', 'Chancel Mbemba', 'Arthur Masuaku'],
+    'congo dr': ['Yoane Wissa', 'Cédric Bakambu', 'Meschack Elia', 'Samuel Moutoussamy', 'Charles Pickel', 'Chancel Mbemba', 'Arthur Masuaku'],
+    'uzbekistan': ['Eldor Shomurodov', 'Oston Urunov', 'Abbosbek Fayzullaev', 'Jaloliddin Masharipov', 'Odiljon Hamrobekov', 'Husniddin Aliqulov'],
+    'colombia': ['Luis Díaz', 'James Rodríguez', 'Jhon Arias', 'Rafael Santos Borré', 'Jhon Durán', 'Jefferson Lerma', 'Daniel Muñoz', 'Davinson Sánchez'],
+    'england': ['Harry Kane', 'Jude Bellingham', 'Phil Foden', 'Bukayoko Saka', 'Declan Rice', 'Cole Palmer', 'John Stones', 'Kyle Walker'],
+    'croatia': ['Luka Modrić', 'Andrej Kramarić', 'Ivan Perišić', 'Mateo Kovačić', 'Mario Pašalić', 'Joško Gvardiol', 'Josip Šutalo'],
+    'ghana': ['Mohammed Kudus', 'Inaki Williams', 'Jordan Ayew', 'Antoine Semenyo', 'Salis Abdul Samed', 'Alexander Djiku', 'Alidu Seidu'],
+    'panama': ['José Fajardo', 'Ismael Díaz', 'Adalberto Carrasquilla', 'Yoel Bárcenas', 'Aníbal Godoy', 'Fidel Escobar', 'Michael Amir Murillo'],
+  };
+
+  static String getDeterministicPlayer(String teamName, int index) {
+    final cleanName = teamName.trim().toLowerCase();
+    final players = _countryPlayers[cleanName];
+    if (players != null && players.isNotEmpty) {
+      return players[index % players.length];
+    }
+    return '${teamName.split(' ')[0]} Player ${index + 1}';
   }
 
   static bool isTesting = false;
@@ -174,16 +243,23 @@ class MatchRepository {
         MatchGoals(90 + 6, 'Yasin Ayari', true),
       ];
     }
+    if (matchNumber == 34) {
+      return [
+        MatchGoals(10, getDeterministicPlayer(awayTeam, 0), false),
+        MatchGoals(30, getDeterministicPlayer(awayTeam, 1), false),
+        MatchGoals(50, getDeterministicPlayer(awayTeam, 2), false),
+      ];
+    }
     
     final List<MatchGoals> goals = [];
     final homeCount = (matchNumber * 3 + 1) % 4;
     final awayCount = (matchNumber * 7 + 2) % 3;
     
     for (int g = 0; g < homeCount; g++) {
-      goals.add(MatchGoals(10 + g * 20, 'Home Player ${g + 1}', true));
+      goals.add(MatchGoals(10 + g * 20, getDeterministicPlayer(homeTeam, g), true));
     }
     for (int g = 0; g < awayCount; g++) {
-      goals.add(MatchGoals(15 + g * 25, 'Away Player ${g + 1}', false));
+      goals.add(MatchGoals(15 + g * 25, getDeterministicPlayer(awayTeam, g), false));
     }
     return goals;
   }
@@ -199,10 +275,13 @@ class MatchRepository {
       return;
     }
     
-    final elapsed = diff.inMinutes;
+    final rawElapsed = diff.inMinutes;
+    final elapsed = rawElapsed <= 45
+        ? rawElapsed
+        : (rawElapsed <= 60 ? 45 : rawElapsed - 15);
     final goals = getMatchGoals(m.matchNumber, m.homeTeam, m.awayTeam);
     
-    if (elapsed <= 120) {
+    if (rawElapsed <= 120) {
       m.status = 'live';
       m.homeScore = goals.where((g) => g.isHome && g.minute <= elapsed).length;
       m.awayScore = goals.where((g) => !g.isHome && g.minute <= elapsed).length;
@@ -216,7 +295,7 @@ class MatchRepository {
           detail: 'Match Started at ${m.venue}',
         )
       ];
-      if (elapsed > 45) {
+      if (rawElapsed > 45) {
         timeline.insert(
           0,
           TimelineEvent(
@@ -543,7 +622,7 @@ class MatchRepository {
                 TimelineEvent(
                   minute: 10 + g * 20,
                   type: 'goal',
-                  player: 'Home Player ${g + 1}',
+                  player: getDeterministicPlayer(homeTeam, g),
                   team: homeTeam,
                   detail: 'Goal!',
                 ),
@@ -556,7 +635,7 @@ class MatchRepository {
                 TimelineEvent(
                   minute: 15 + g * 25,
                   type: 'goal',
-                  player: 'Away Player ${g + 1}',
+                  player: getDeterministicPlayer(awayTeam, g),
                   team: awayTeam,
                   detail: 'Goal!',
                 ),

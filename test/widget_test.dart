@@ -42,6 +42,42 @@ void main() {
       expect(decoded.id, 'test_match');
       expect(decoded.matchNumber, 99);
     });
+
+    test('getDisplayElapsedMinutes accounts for halftime break correctly', () {
+      final kickoff = DateTime.utc(2026, 6, 21, 10, 0);
+      final match = MatchModel(
+        id: 'test_match',
+        matchNumber: 99,
+        homeTeam: 'Home Team',
+        awayTeam: 'Away Team',
+        homeFlag: '🏳️',
+        awayFlag: '🏳️',
+        dateTime: kickoff,
+        venue: 'Stadium Name',
+        city: 'City Name',
+        country: 'Country Name',
+        stage: 'Group Stage',
+        groupName: 'Group A',
+      );
+
+      // 30 mins elapsed -> shows 30
+      expect(match.getDisplayElapsedMinutes(kickoff.add(const Duration(minutes: 30))), 30);
+      
+      // 45 mins elapsed -> shows 45
+      expect(match.getDisplayElapsedMinutes(kickoff.add(const Duration(minutes: 45))), 45);
+
+      // 55 mins elapsed (during HT) -> shows 45
+      expect(match.getDisplayElapsedMinutes(kickoff.add(const Duration(minutes: 55))), 45);
+
+      // 60 mins elapsed (HT end) -> shows 45
+      expect(match.getDisplayElapsedMinutes(kickoff.add(const Duration(minutes: 60))), 45);
+
+      // 76 mins elapsed -> shows 61
+      expect(match.getDisplayElapsedMinutes(kickoff.add(const Duration(minutes: 76))), 61);
+
+      // 96 mins elapsed -> shows 81
+      expect(match.getDisplayElapsedMinutes(kickoff.add(const Duration(minutes: 96))), 81);
+    });
   });
 
   group('Favorites Provider Tests', () {

@@ -1,4 +1,4 @@
-package com.yaandu.fifa
+package com.yaandu.fwc
 
 import io.flutter.embedding.android.FlutterActivity
 

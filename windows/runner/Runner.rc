@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.yaandu" "\0"
-            VALUE "FileDescription", "Fifa" "\0"
+            VALUE "FileDescription", "WC Score" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Fifa" "\0"
+            VALUE "InternalName", "WC Score" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.yaandu. All rights reserved." "\0"
-            VALUE "OriginalFilename", "fifa.exe" "\0"
-            VALUE "ProductName", "Fifa" "\0"
+            VALUE "OriginalFilename", "wc_score.exe" "\0"
+            VALUE "ProductName", "WC Score" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

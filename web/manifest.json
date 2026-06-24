@@ -1,6 +1,6 @@
 {
-    "name": "Fifa",
-    "short_name": "Fifa",
+    "name": "WC Score",
+    "short_name": "WC Score",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

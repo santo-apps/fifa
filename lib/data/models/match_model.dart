@@ -73,6 +73,15 @@ class MatchModel {
     List<TimelineEvent>? timeline,
   }) : timeline = timeline ?? [];
 
+  int getDisplayElapsedMinutes(DateTime now) {
+    final rawElapsed = now.toUtc().difference(dateTime.toUtc()).inMinutes;
+    if (rawElapsed < 0) return 0;
+    if (rawElapsed <= 45) return rawElapsed;
+    if (rawElapsed <= 60) return 45;
+    return rawElapsed - 15;
+  }
+
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

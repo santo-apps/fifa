@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
             Icon(Icons.sports_soccer, color: Theme.of(context).colorScheme.secondary, size: 24),
             const SizedBox(width: 8),
             Text(
-              'FIFA 2026',
+              'WC 2026',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,

@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../data/models/match_model.dart';
 import '../data/repositories/match_repository.dart';
+import '../core/services/storage_service.dart';
+import '../core/services/notification_service.dart';
 import 'notification_provider.dart';
 
 class ScheduleProvider extends ChangeNotifier {
@@ -8,6 +11,9 @@ class ScheduleProvider extends ChangeNotifier {
 
   List<MatchModel> _matches = [];
   bool _isLoading = false;
+
+  Timer? _statusUpdateTimer;
+  final Map<String, String> _lastNotifiedStates = {};
 
   // Filters
   String _searchQuery = '';
@@ -17,7 +23,10 @@ class ScheduleProvider extends ChangeNotifier {
   String _selectedGroup = ''; // 'Group A', 'Group B', etc.
 
   ScheduleProvider() {
-    loadSchedule();
+    loadSchedule().then((_) {
+      _initializeNotifiedStates();
+      _startStatusUpdateTimer();
+    });
   }
 
   // Getters
@@ -206,6 +215,7 @@ class ScheduleProvider extends ChangeNotifier {
           detail: 'Match Started at ${_matches[idx].venue}',
         )
       ];
+      _lastNotifiedStates[_matches[idx].id] = "live_0_0";
       await _repository.saveMatches(_matches);
       notifyListeners();
 
@@ -245,6 +255,7 @@ class ScheduleProvider extends ChangeNotifier {
           detail: 'Goal! Score is now ${match.homeScore} - ${match.awayScore}',
         ),
       );
+      _lastNotifiedStates[match.id] = "live_${match.homeScore}_${match.awayScore}";
 
       await _repository.saveMatches(_matches);
       notifyListeners();
@@ -309,6 +320,7 @@ class ScheduleProvider extends ChangeNotifier {
           detail: 'Full-Time: Final score ${match.homeScore} - ${match.awayScore}',
         ),
       );
+      _lastNotifiedStates[match.id] = "completed_${match.homeScore}_${match.awayScore}";
 
       await _repository.saveMatches(_matches);
       notifyListeners();
@@ -324,5 +336,117 @@ class ScheduleProvider extends ChangeNotifier {
   Future<void> resetSchedule() async {
     await _repository.resetSchedule();
     await loadSchedule();
+  }
+
+  void _initializeNotifiedStates() {
+    final now = DateTime.now().toUtc();
+    for (var m in _matches) {
+      if (m.status == 'live') {
+        _lastNotifiedStates[m.id] = "live_${m.homeScore}_${m.awayScore}";
+      } else if (m.status == 'completed') {
+        _lastNotifiedStates[m.id] = "completed_${m.homeScore}_${m.awayScore}";
+      }
+    }
+  }
+
+  void _startStatusUpdateTimer() {
+    _statusUpdateTimer?.cancel();
+    _statusUpdateTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      _checkAndUpdatesMatchesDynamicState();
+    });
+  }
+
+  void _checkAndUpdatesMatchesDynamicState() {
+    if (_matches.isEmpty) return;
+
+    final now = DateTime.now().toUtc();
+    final changed = MatchRepository.updateMatchesStatusAndScores(_matches);
+    if (!changed) return;
+
+    bool shouldSave = false;
+
+    for (var m in _matches) {
+      final difference = m.dateTime.toUtc().difference(now);
+
+      // 1. Kickoff Reminder (Starts in <= 15 minutes and > 0 minutes)
+      if (difference.inMinutes <= 15 && difference.inMinutes > 0) {
+        final stateKey = "upcoming_reminder";
+        if (_lastNotifiedStates[m.id] != stateKey) {
+          _lastNotifiedStates[m.id] = stateKey;
+          shouldSave = true;
+
+          if (StorageService.areNotificationsEnabled()) {
+            NotificationService.showInstantNotification(
+              id: m.matchNumber,
+              title: '⚽ Match Starting Soon: ${m.homeTeam} vs ${m.awayTeam}',
+              body: 'Kickoff in ${difference.inMinutes} minutes at ${m.venue}, ${m.city}!',
+            );
+          }
+        }
+      }
+
+      // 2. Match Started / Score Changed (status is 'live')
+      if (m.status == 'live') {
+        final elapsed = m.getDisplayElapsedMinutes(now);
+        final stateKey = "live_${m.homeScore}_${m.awayScore}";
+        final lastState = _lastNotifiedStates[m.id];
+
+        if (lastState == null || !lastState.startsWith("live")) {
+          // Just transitioned from upcoming to live
+          _lastNotifiedStates[m.id] = stateKey;
+          shouldSave = true;
+
+          if (StorageService.areNotificationsEnabled()) {
+            NotificationService.showInstantNotification(
+              id: m.matchNumber + 2000,
+              title: '🔴 Match Started!',
+              body: '${m.homeTeam} vs ${m.awayTeam} is now live at ${m.venue}!',
+            );
+          }
+        } else if (lastState != stateKey) {
+          // Score changed while live
+          _lastNotifiedStates[m.id] = stateKey;
+          shouldSave = true;
+
+          if (StorageService.areNotificationsEnabled()) {
+            NotificationService.showInstantNotification(
+              id: m.matchNumber + 3000,
+              title: '⚽ GOAL!',
+              body: 'Live Score: ${m.homeTeam} ${m.homeScore} - ${m.awayScore} ${m.awayTeam} (${elapsed}\')',
+            );
+          }
+        }
+      }
+
+      // 3. Match Completed (Transitions to 'completed')
+      if (m.status == 'completed') {
+        final stateKey = "completed_${m.homeScore}_${m.awayScore}";
+        final lastState = _lastNotifiedStates[m.id];
+
+        if (lastState != null && lastState.startsWith("live") && lastState != stateKey) {
+          _lastNotifiedStates[m.id] = stateKey;
+          shouldSave = true;
+
+          if (StorageService.areNotificationsEnabled()) {
+            NotificationService.showInstantNotification(
+              id: m.matchNumber + 4000,
+              title: '🏁 Match Completed!',
+              body: 'Full-Time: ${m.homeTeam} ${m.homeScore} - ${m.awayScore} ${m.awayTeam}',
+            );
+          }
+        }
+      }
+    }
+
+    if (shouldSave) {
+      _repository.saveMatches(_matches);
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    _statusUpdateTimer?.cancel();
+    super.dispose();
   }
 }

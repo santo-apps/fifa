@@ -24,11 +24,11 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
     final format = DateFormat('EEE, MMM d @ h:mm a');
     final timeStr = format.format(match.dateTime.toLocal());
     final shareText =
-        '⚽ FIFA 2026 World Cup Match!\n'
+        '⚽ WC 2026 World Cup Match!\n'
         '${match.homeFlag} ${match.homeTeam} vs ${match.awayTeam} ${match.awayFlag}\n'
         '📅 Time: $timeStr (Local Time)\n'
         '🏟️ Venue: ${match.venue}, ${match.city}\n'
-        'Follow live scores and schedules in the FIFA 2026 Schedule App!';
+        'Follow live scores and schedules in the WC 2026 Schedule App!';
     Share.share(shareText);
   }
 
@@ -164,13 +164,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen> {
                                     builder: (context) {
                                       String badgeText = 'COMPLETED';
                                       if (match.status == 'live') {
-                                        final elapsed = DateTime.now()
-                                            .toUtc()
-                                            .difference(match.dateTime.toUtc())
-                                            .inMinutes;
-                                        final displayMin = elapsed < 0
-                                            ? 0
-                                            : (elapsed > 120 ? 120 : elapsed);
+                                        final displayMin = match.getDisplayElapsedMinutes(DateTime.now());
                                         badgeText = 'LIVE - $displayMin\'';
                                       }
                                       return Text(
